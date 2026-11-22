@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Aerophysic | PMU Pro</title>
+    <style>
+        :root {
+            --bg: #050505;
+            --card: #121212;
+            --accent: #00e5ff;
+            --danger: #ff1744;
+            --safe: #00e676;
+            --yellow: #ffd700;
+            --text: #e0e0e0;
+            --border: #333;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        header {
+            padding: 10px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+            background: var(--card);
+        }
+
+        h1 { margin: 0; font-size: 1rem; color: var(--accent); letter-spacing: 1px; }
+        
+        .contact-info {
+            font-size: 0.65rem;
+            color: var(--yellow);
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .scope-section {
+            flex: 2;
+            display: flex;
+            flex-direction: column;
+            padding: 10px;
+            min-height: 220px;
+        }
+
+        .scope-container {
+            flex: 1;
+            background: #000;
+            border-radius: 8px;
+            border: 1px solid var(--accent);
+            position: relative;
+            overflow: hidden;
+            transition: border-color 0.3s ease;
+        }
+
+        .scope-container.danger { border-color: var(--danger); }
+
+        canvas { width: 100%; height: 100%; display: block; }
+
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .stat-card {
+            background: var(--card);
+            padding: 6px;
+            border-radius: 4px;
+            text-align: center;
+            border-bottom: 2px solid var(--accent);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card.danger { 
+            border-bottom-color: var(--danger); 
+            background: #2c0a0a;
+        }
+
+        .stat-val { display: block; font-size: 0.85rem; font-weight: bold; color: #fff; }
+        .stat-lbl { font-size: 0.55rem; opacity: 0.6; text-transform: uppercase; }
+
+        .controls-section {
+            flex: 1.2;
+            background: var(--card);
+            border-top: 1px solid var(--border);
+            padding: 12px 15px;
+            border-radius: 16px 16px 0 0;
+            overflow-y: auto;
+        }
+
+        .input-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+
+        .slider-container { flex: 1; }
+        
+        label {
+            display: block;
+            font-size: 0.7rem;
+            color: var(--accent);
+            margin-bottom: 2px;
+            white-space: nowrap;
+        }
+
+        input[type=range] {
+            width: 100%;
+            accent-color: var(--accent);
+            margin: 0;
+        }
+
+        input[type=number] {
+            width: 65px;
+            background: #000;
+            border: 1px solid var(--border);
+            color: var(--accent);
+            padding: 4px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        footer {
+            padding: 4px;
+            font-size: 0.55rem;
+            text-align: center;
+            opacity: 0.4;
+            flex-shrink: 0;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>AEROPHYSIC PMU</h1>
+    <div class="contact-info">
+        CONTACT: +98 9391673656 ❤
+    </div>
+</header>
+
+<div class="scope-section">
+    <div class="scope-container" id="scopeContainer">
+        <canvas id="scopeCanvas"></canvas>
+    </div>
+    <div class="stats-bar" id="statsBar">
+        <div class="stat-card" id="card-vPeak">
+            <span class="stat-val" id="vPeak">-</span>
+            <span class="stat-lbl">V<sub style="color:#fff">peak</sub></span>
+        </div>
+        <div class="stat-card" id="card-iSteady">
+            <span class="stat-val" id="iSteady">-</span>
+            <span class="stat-lbl">I<sub style="color:#fff">ss</sub></span>
+        </div>
+        <div class="stat-card" id="card-sRatio">
+            <span class="stat-val" id="sRatio">-</span>
+            <span class="stat-lbl">Stress</span>
+        </div>
+    </div>
+</div>
+
+<div class="controls-section">
+    <!-- V_BUS -->
+    <div class="input-row">
+        <div class="slider-container">
+            <label>V<sub style="color:#fff">BUS</sub> (V)</label>
+            <input type="range" id="vBus_range" min="1" max="400" value="48" oninput="onSlider('vBus', this.value)">
+        </div>
+        <input type="number" id="vBus_num" value="48" oninput="onNumber('vBus', this.value)">
+    </div>
+
+    <!-- R_LOAD -->
+    <div class="input-row">
+        <div class="slider-container">
+            <label>R<sub style="color:#fff">LOAD</sub> (Ω)</label>
+            <input type="range" id="rLoad_range" min="0.1" max="50" step="0.1" value="2.0" oninput="onSlider('rLoad', this.value)">
+        </div>
+        <input type="number" id="rLoad_num" value="2.0" step="0.1" oninput="onNumber('rLoad', this.value)">
+    </div>
+
+    <!-- L_PARA -->
+    <div class="input-row">
+        <div class="slider-container">
+            <label>L<sub style="color:#fff">PARA</sub> (nH)</label>
+            <input type="range" id="lPara_range" min="1" max="2000" value="80" oninput="onSlider('lPara', this.value)">
+        </div>
+        <input type="number" id="lPara_num" value="80" oninput="onNumber('lPara', this.value)">
+    </div>
+
+    <!-- R_DS -->
+    <div class="input-row">
+        <div class="slider-container">
+            <label>R<sub style="color:#fff">DS(on)</sub> (Ω)</label>
+            <input type="range" id="rds_range" min="0.01" max="1" step="0.01" value="0.04" oninput="onSlider('rds', this.value)">
+        </div>
+        <input type="number" id="rds_num" value="0.04" step="0.01" oninput="onNumber('rds', this.value)">
+    </div>
+</div>
+
+<footer>AEROPHYSIC SYSTEM ARCHITECTURE</footer>
+
+<script>
+    const canvas = document.getElementById('scopeCanvas');
+    const ctx = canvas.getContext('2d');
+    const scopeContainer = document.getElementById('scopeContainer');
+
+    function resizeCanvas() {
+        const rect = canvas.parentElement.getBoundingClientRect();
+        canvas.width = rect.width * window.devicePixelRatio;
+        canvas.height = rect.height * window.devicePixelRatio;
+        update();
+    }
+    window.addEventListener('resize', resizeCanvas);
+
+    function onSlider(id, val) {
+        document.getElementById(id + '_num').value = val;
+        update();
+    }
+
+    function onNumber(id, val) {
+        document.getElementById(id + '_range').value = val;
+        update();
+    }
+
+    function update() {
+        const Vbus = parseFloat(document.getElementById('vBus_num').value) || 0;
+        const Rload = parseFloat(document.getElementById('rLoad_num').value) || 0;
+        const Lpara = (parseFloat(document.getElementById('lPara_num').value) || 0) * 1e-9;
+        const Rds = parseFloat(document.getElementById('rds_num').value) || 0;
+
+        const denom = Rload + Rds;
+        if (denom <= 0) return;
+
+        const Iss = Vbus / denom;
+        const dt_spike = 100e-9;
+        const Vspike = Lpara * (Iss / dt_spike);
+        const Vpeak = Vbus + Vspike;
+        const stressRatio = Vbus > 0 ? (Vpeak / Vbus) : 0;
+
+        // Update Stats UI
+        document.getElementById('vPeak').innerText = Vpeak.toFixed(1) + ' V';
+        document.getElementById('iSteady').innerText = Iss.toFixed(2) + ' A';
+        document.getElementById('sRatio').innerText = stressRatio.toFixed(2) + ' x';
+
+        // Danger Detection (Critical Threshold: 1.5x)
+        const isDanger = stressRatio > 1.5;
+        const accentColor = isDanger ? '#ff1744' : '#00e5ff';
+
+        // Apply Danger Styling
+        if(isDanger) {
+            scopeContainer.classList.add('danger');
+            document.getElementById('card-sRatio').classList.add('danger');
+            document.getElementById('card-vPeak').classList.add('danger');
+            document.body.style.setProperty('--accent', '#ff1744');
+        } else {
+            scopeContainer.classList.remove('danger');
+            document.getElementById('card-sRatio').classList.remove('danger');
+            document.getElementById('card-vPeak').classList.remove('danger');
+            document.body.style.setProperty('--accent', '#00e5ff');
+        }
+
+        drawWaveform(Vbus, Vpeak, accentColor);
+    }
+
+    function drawWaveform(vBus, vPeak, color) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const w = canvas.width;
+        const h = canvas.height;
+        const pad = 25;
+
+        // Grid
+        ctx.strokeStyle = '#1b1b1b';
+        ctx.lineWidth = 1;
+        for (let i = 0; i <= 8; i++) {
+            let x = (w / 8) * i;
+            ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+            let y = (h / 8) * i;
+            ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+        }
+
+        // Waveform
+        ctx.beginPath();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 3;
+
+        const maxV = Math.max(vPeak * 1.2, 50);
+        const getY = (v) => h - pad - ((v / maxV) * (h - 2 * pad));
+        const getX = (t) => pad + (t * (w - 2 * pad));
+
+        const points = 300;
+        for (let i = 0; i <= points; i++) {
+            let tNorm = i / points;
+            let timeNs = tNorm * 500;
+            let v = 0;
+
+            if (timeNs < 120) {
+                let progress = timeNs / 120;
+                v = vBus + (vPeak - vBus) * Math.sin(progress * Math.PI);
+            } else {
+                let decay = Math.exp(-(timeNs - 120) / 80);
+                v = vBus + (vPeak - vBus) * 0.1 * decay;
+            }
+
+            let x = getX(tNorm);
+            let y = getY(v);
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+
+        // Labels
+        ctx.fillStyle = '#666';
+        ctx.font = `${10 * window.devicePixelRatio}px sans-serif`;
+        ctx.fillText(vPeak.toFixed(0) + 'V', 5, getY(vPeak) - 4);
+        ctx.fillText(vBus.toFixed(0) + 'V', 5, getY(vBus) + 12);
+    }
+
+    setTimeout(resizeCanvas, 50);
+</script>
+</body>
+</html>
